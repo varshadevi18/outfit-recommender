@@ -68,3 +68,15 @@ export const getCategories = async () => {
     throw new Error(error.response?.data?.detail || 'Failed to fetch categories');
   }
 };
+
+// ===== ADD THIS NEW FUNCTION FOR AI RECOMMENDATIONS =====
+export const getOutfitRecommendation = async (query) => {
+  try {
+    const response = await api.post('/wardrobe/recommend', { query });
+    return response.data;
+  } catch (error) {
+    console.error('Recommendation error:', error);
+    throw new Error(error.response?.data?.detail || 'Failed to get recommendation');
+  }
+};
+// ===== END OF NEW FUNCTION =====

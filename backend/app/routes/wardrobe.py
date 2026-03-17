@@ -160,3 +160,42 @@ async def delete_item(item_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return JSONResponse(content={"message": "Item deleted successfully"})
+
+@router.post("/recommend")
+async def get_recommendation(
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """Get outfit recommendation based on occasion"""
+    try:
+        user_query = request.get('query', '')
+        if not user_query:
+            raise HTTPException(status_code=400, detail="No query provided")
+        
+        # Get all wardrobe items
+        items = db.query(ClothingItem).all()
+        
+        # Convert to list of dicts
+        wardrobe_items = []
+        for item in items:
+            wardrobe_items.append({
+                'id': item.id,
+                'category': item.category,
+                'color_primary': item.color_primary,
+                'color_secondary': item.color_secondary,
+                'pattern': item.pattern,
+                'style': item.style,
+                'formality_level': item.formality_level,
+                'image_url': f"/uploads/{os.path.basename(item.image_path)}"
+            })
+        
+        # Get recommendation
+        from app.services.recommendation_engine import recommendation_engine
+        recommendation = recommendation_engine.recommend(wardrobe_items, user_query)
+        
+        return JSONResponse(content=recommendation)
+        
+    except Exception as e:
+        print(f"Error in recommendation: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))

@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { FiGrid, FiList, FiFilter, FiTrash2 } from 'react-icons/fi';
+import { FiGrid, FiList, FiFilter, FiTrash2, FiCpu } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ClothingCard from './ClothingCard';
-import { deleteWardrobeItem } from '../services/api';
+import RecommendationModal from './RecommendationModal';
+import { deleteWardrobeItem, getOutfitRecommendation } from '../services/api';
 
 const Wardrobe = ({ items, loading, onRefresh }) => {
   const [viewMode, setViewMode] = useState('grid');
@@ -15,6 +16,7 @@ const Wardrobe = ({ items, loading, onRefresh }) => {
   });
   const [selectedItems, setSelectedItems] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [isRecommendModalOpen, setIsRecommendModalOpen] = useState(false);
 
   // Get unique values for filters
   const filterOptions = useMemo(() => {
@@ -65,6 +67,16 @@ const Wardrobe = ({ items, loading, onRefresh }) => {
     }
   };
 
+  const handleRecommend = async (query) => {
+    try {
+      const result = await getOutfitRecommendation(query);
+      return result;
+    } catch (error) {
+      toast.error('Failed to get recommendation');
+      throw error;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -107,20 +119,31 @@ const Wardrobe = ({ items, loading, onRefresh }) => {
             </button>
           </div>
 
-          {selectedItems.length > 0 && (
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-600">
-                {selectedItems.length} selected
-              </span>
-              <button
-                onClick={handleBulkDelete}
-                className="flex items-center space-x-1 px-3 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
-              >
-                <FiTrash2 className="h-4 w-4" />
-                <span className="text-sm">Delete</span>
-              </button>
-            </div>
-          )}
+          <div className="flex items-center space-x-3">
+            {selectedItems.length > 0 && (
+              <>
+                <span className="text-sm text-gray-600">
+                  {selectedItems.length} selected
+                </span>
+                <button
+                  onClick={handleBulkDelete}
+                  className="flex items-center space-x-1 px-3 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
+                >
+                  <FiTrash2 className="h-4 w-4" />
+                  <span className="text-sm">Delete</span>
+                </button>
+              </>
+            )}
+            
+            {/* AI Recommend Button */}
+            <button
+              onClick={() => setIsRecommendModalOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-primary-600 text-white rounded-lg hover:from-purple-700 hover:to-primary-700 transition-all shadow-md"
+            >
+              <FiCpu className="h-4 w-4" />
+              <span className="text-sm font-medium">AI Recommend</span>
+            </button>
+          </div>
         </div>
 
         {/* Filter Panel */}
@@ -263,6 +286,13 @@ const Wardrobe = ({ items, loading, onRefresh }) => {
           ))}
         </div>
       )}
+
+      {/* Recommendation Modal */}
+      <RecommendationModal
+        isOpen={isRecommendModalOpen}
+        onClose={() => setIsRecommendModalOpen(false)}
+        onRecommend={handleRecommend}
+      />
     </div>
   );
 };
