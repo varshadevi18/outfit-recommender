@@ -1,82 +1,61 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds
+  timeout: 30000,
 });
 
 // Upload clothing image
-export const uploadClothingImage = async (file) => {
+export const uploadClothingImage = async (file, token) => {
   const formData = new FormData();
   formData.append('file', file);
-
-  try {
-    const response = await api.post('/wardrobe/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Upload error:', error);
-    throw new Error(error.response?.data?.detail || 'Upload failed');
-  }
+  const response = await api.post('/wardrobe/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: `Bearer ${token}`
+    }
+  });
+  return response.data;
 };
 
 // Get all wardrobe items
-export const getWardrobeItems = async () => {
-  try {
-    const response = await api.get('/wardrobe/items');
-    return response.data;
-  } catch (error) {
-    console.error('Fetch error:', error);
-    throw new Error(error.response?.data?.detail || 'Failed to fetch items');
-  }
+export const getWardrobeItems = async (token) => {
+  const response = await api.get('/wardrobe/items', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
 };
 
 // Get single item
-export const getWardrobeItem = async (id) => {
-  try {
-    const response = await api.get(`/wardrobe/items/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Fetch error:', error);
-    throw new Error(error.response?.data?.detail || 'Failed to fetch item');
-  }
+export const getWardrobeItem = async (id, token) => {
+  const response = await api.get(`/wardrobe/items/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
 };
 
 // Delete item
-export const deleteWardrobeItem = async (id) => {
-  try {
-    const response = await api.delete(`/wardrobe/items/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Delete error:', error);
-    throw new Error(error.response?.data?.detail || 'Failed to delete item');
-  }
+export const deleteWardrobeItem = async (id, token) => {
+  const response = await api.delete(`/wardrobe/items/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
 };
 
-// Get categories with counts
-export const getCategories = async () => {
-  try {
-    const response = await api.get('/wardrobe/categories');
-    return response.data;
-  } catch (error) {
-    console.error('Fetch categories error:', error);
-    throw new Error(error.response?.data?.detail || 'Failed to fetch categories');
-  }
+// Get categories with counts (if needed)
+export const getCategories = async (token) => {
+  const response = await api.get('/wardrobe/categories', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
 };
 
-// ===== ADD THIS NEW FUNCTION FOR AI RECOMMENDATIONS =====
-export const getOutfitRecommendation = async (query) => {
-  try {
-    const response = await api.post('/wardrobe/recommend', { query });
-    return response.data;
-  } catch (error) {
-    console.error('Recommendation error:', error);
-    throw new Error(error.response?.data?.detail || 'Failed to get recommendation');
-  }
+// AI outfit recommendation
+export const getOutfitRecommendation = async (query, token) => {
+  const response = await api.post('/wardrobe/recommend', { query }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
 };
-// ===== END OF NEW FUNCTION =====

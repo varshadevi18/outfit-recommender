@@ -6,7 +6,7 @@ import ClothingCard from './ClothingCard';
 import RecommendationModal from './RecommendationModal';
 import { deleteWardrobeItem, getOutfitRecommendation } from '../services/api';
 
-const Wardrobe = ({ items, loading, onRefresh }) => {
+const Wardrobe = ({ items, loading, onRefresh, token }) => {
   const [viewMode, setViewMode] = useState('grid');
   const [filters, setFilters] = useState({
     category: 'all',
@@ -43,7 +43,7 @@ const Wardrobe = ({ items, loading, onRefresh }) => {
   const handleDelete = async (itemId) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
-        await deleteWardrobeItem(itemId);
+        await deleteWardrobeItem(itemId, token);
         toast.success('Item deleted successfully');
         onRefresh();
       } catch (error) {
@@ -57,7 +57,7 @@ const Wardrobe = ({ items, loading, onRefresh }) => {
     
     if (window.confirm(`Delete ${selectedItems.length} items?`)) {
       try {
-        await Promise.all(selectedItems.map(id => deleteWardrobeItem(id)));
+        await Promise.all(selectedItems.map(id => deleteWardrobeItem(id, token)));
         toast.success(`${selectedItems.length} items deleted`);
         setSelectedItems([]);
         onRefresh();
@@ -69,7 +69,7 @@ const Wardrobe = ({ items, loading, onRefresh }) => {
 
   const handleRecommend = async (query) => {
     try {
-      const result = await getOutfitRecommendation(query);
+      const result = await getOutfitRecommendation(query, token);
       return result;
     } catch (error) {
       toast.error('Failed to get recommendation');
@@ -292,6 +292,7 @@ const Wardrobe = ({ items, loading, onRefresh }) => {
         isOpen={isRecommendModalOpen}
         onClose={() => setIsRecommendModalOpen(false)}
         onRecommend={handleRecommend}
+        token={token}
       />
     </div>
   );

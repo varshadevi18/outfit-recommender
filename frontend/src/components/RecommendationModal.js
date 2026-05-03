@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiSend, FiCalendar, FiThumbsUp } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { getOutfitRecommendation } from '../services/api';
 
-const RecommendationModal = ({ isOpen, onClose, onRecommend }) => {
+const RecommendationModal = ({ isOpen, onClose, onRecommend, token }) => {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [recommendation, setRecommendation] = useState(null);
@@ -17,10 +18,12 @@ const RecommendationModal = ({ isOpen, onClose, onRecommend }) => {
 
     setLoading(true);
     try {
-      const result = await onRecommend(query);
+      const result = await getOutfitRecommendation(query, token);
       setRecommendation(result);
+      if (onRecommend) onRecommend(result);
     } catch (error) {
       toast.error('Failed to get recommendation');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -58,10 +61,7 @@ const RecommendationModal = ({ isOpen, onClose, onRecommend }) => {
                 <FiCalendar className="mr-2 text-primary-600" />
                 AI Outfit Recommender
               </h2>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
+              <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
                 <FiX className="h-5 w-5 text-gray-500" />
               </button>
             </div>
@@ -72,7 +72,6 @@ const RecommendationModal = ({ isOpen, onClose, onRecommend }) => {
                   <p className="text-gray-600 mb-4">
                     Tell me about your occasion and I'll recommend the perfect outfit from your wardrobe!
                   </p>
-
                   <div className="mb-4">
                     <p className="text-sm text-gray-500 mb-2">Quick suggestions:</p>
                     <div className="flex flex-wrap gap-2">
@@ -80,28 +79,26 @@ const RecommendationModal = ({ isOpen, onClose, onRecommend }) => {
                         <button
                           key={suggestion}
                           onClick={() => setQuery(suggestion)}
-                          className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors"
+                          className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
                         >
                           {suggestion}
                         </button>
                       ))}
                     </div>
                   </div>
-
                   <form onSubmit={handleSubmit}>
                     <textarea
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="e.g., I have a job interview tomorrow, what should I wear?"
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 resize-none"
                       rows="3"
                     />
-                    
                     <div className="mt-4 flex justify-end">
                       <button
                         type="submit"
                         disabled={loading}
-                        className="flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
                       >
                         {loading ? (
                           <>
@@ -124,89 +121,56 @@ const RecommendationModal = ({ isOpen, onClose, onRecommend }) => {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       Recommended Outfit for: <span className="text-primary-600">"{query}"</span>
                     </h3>
-                    <p className="text-gray-600">{recommendation.description}</p>
+                    <p className="text-gray-600">{recommendation.description || 'No description available'}</p>
                   </div>
 
-                  {recommendation.items.length > 0 ? (
+                  {recommendation.items && recommendation.items.length > 0 ? (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        {recommendation.items.map((item, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                          >
+                        {recommendation.items.map((item, idx) => (
+                          <div key={idx} className="bg-gray-50 rounded-lg p-4 border">
                             <div className="flex items-start space-x-4">
                               <img
                                 src={`http://localhost:8000${item.item.image_url}`}
                                 alt={item.item.category}
                                 className="w-24 h-24 object-cover rounded-lg"
                               />
-                              <div className="flex-1">
+                              <div>
                                 <span className="inline-block px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full mb-2">
-                                  {item.type} - {item.position}
+                                  {item.type}
                                 </span>
-                                <p className="font-medium text-gray-900 capitalize">
-                                  {item.item.category}
-                                </p>
+                                <p className="font-medium capitalize">{item.item.category}</p>
                                 <div className="flex items-center mt-1">
                                   <div
-                                    className="w-4 h-4 rounded-full border border-gray-300 mr-2"
+                                    className="w-4 h-4 rounded-full border mr-2"
                                     style={{ backgroundColor: item.item.color_primary }}
                                   />
-                                  <span className="text-sm text-gray-600 capitalize">
-                                    {item.item.color_primary.replace('_', ' ')}
-                                  </span>
+                                  <span className="text-sm capitalize">{item.item.color_primary}</span>
                                 </div>
-                                <p className="text-sm text-gray-500 capitalize mt-1">
-                                  {item.item.pattern} • {item.item.formality_level.replace('_', ' ')}
-                                </p>
+                                <p className="text-sm text-gray-500 capitalize">{item.item.pattern}</p>
                               </div>
                             </div>
-                          </motion.div>
+                          </div>
                         ))}
                       </div>
-
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                        <div className="flex items-start">
-                          <FiThumbsUp className="h-5 w-5 text-green-600 mr-2 mt-0.5" />
-                          <div>
-                            <h4 className="font-medium text-green-800">Outfit Complete!</h4>
-                            <p className="text-sm text-green-700">
-                              This outfit has {recommendation.total_items} items perfect for your {recommendation.occasion} occasion.
-                              {recommendation.available_counts.tops > 0 && ` You have ${recommendation.available_counts.tops} tops, `}
-                              {recommendation.available_counts.bottoms > 0 && `${recommendation.available_counts.bottoms} bottoms, `}
-                              {recommendation.available_counts.dresses > 0 && `${recommendation.available_counts.dresses} dresses, `}
-                              {recommendation.available_counts.outerwear > 0 && `${recommendation.available_counts.outerwear} outerwear available.`}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
                       <div className="flex justify-end space-x-3">
                         <button
                           onClick={() => setRecommendation(null)}
-                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg"
                         >
                           Ask Again
                         </button>
-                        <button
-                          onClick={onClose}
-                          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-                        >
+                        <button onClick={onClose} className="px-4 py-2 bg-primary-600 text-white rounded-lg">
                           Done
                         </button>
                       </div>
                     </>
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-gray-500 mb-4">No suitable items found for this occasion.</p>
-                      <p className="text-sm text-gray-400">Try uploading more items or a different occasion.</p>
+                      <p className="text-gray-500">{recommendation.message || 'No suitable items found for this occasion.'}</p>
                       <button
                         onClick={() => setRecommendation(null)}
-                        className="mt-4 px-4 py-2 text-primary-600 border border-primary-600 rounded-lg hover:bg-primary-50"
+                        className="mt-4 px-4 py-2 text-primary-600 border border-primary-600 rounded-lg"
                       >
                         Try Another Occasion
                       </button>

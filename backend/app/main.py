@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routes import wardrobe
+from app.routes import wardrobe, auth
 import os
 
 app = FastAPI(title="Virtual Wardrobe API", version="1.0.0")
@@ -19,8 +19,9 @@ app.add_middleware(
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# Include routers
-app.include_router(wardrobe.router, prefix="/api/wardrobe", tags=["wardrobe"])
+# Include routers WITHOUT /api prefix
+app.include_router(wardrobe.router)
+app.include_router(auth.router)
 
 @app.get("/")
 async def root():

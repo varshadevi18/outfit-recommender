@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
+import { FiUpload, FiX } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { uploadClothingImage } from '../services/api';
 
-const ImageUpload = ({ onUploadSuccess }) => {
+const ImageUpload = ({ onUploadSuccess, token }) => {   // <-- add token prop
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [analysisResults, setAnalysisResults] = useState({});
@@ -55,7 +55,7 @@ const ImageUpload = ({ onUploadSuccess }) => {
       try {
         toast.loading(`Analyzing ${fileObj.file.name}...`, { id: fileObj.id });
         
-        const result = await uploadClothingImage(fileObj.file);
+        const result = await uploadClothingImage(fileObj.file, token);   // <-- pass token
         
         setAnalysisResults(prev => ({
           ...prev,
